@@ -1,9 +1,3 @@
-#import urllib.request
-#source = urllib.request.urlopen("c")
-#html = source.read()
-#with open('test1.html' , 'w') as  file:
- #   file.write(html)
-#print('The End')
 
 from lxml import html
 import requests
