@@ -32,7 +32,7 @@ print(heap_sort(a))
 
 # Since our tree height is O(lg(n)),
 # we could do up to O(lg(n)) moves.
-# Across all nn nodes, that's an overall time complexity of O(nlg(n)).
+# Across all n nodes, that's an overall time complexity of O(nlg(n)).
 # After transforming the tree into a heap,
 # we remove all n elements from it—one item at a time.
 # Removing from a heap takes O(lg(n)) time,
