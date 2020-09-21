@@ -10,8 +10,7 @@ import os
 from os import listdir
 from os.path import isfile, join
 import sys
-
-import re
+from unicodedata import category
 
 import nltk
 nltk.download('punkt')
@@ -20,15 +19,20 @@ from nltk.tokenize import word_tokenize
 from nltk.stem.porter import PorterStemmer
 from nltk.corpus import stopwords
 
-import csv
+from pymongo import MongoClient
+
+client = MongoClient('mongodb://localhost:27017/')
+db = client.hello
+words = db.words
 
 
 def get_content(url):
     data = requests.get(url)
     # Checking status code
+    # stexe qanim ban poxi
     status = data.status_code
-    if status == 404:
-        sys.exit('This page is not available!')
+    if not str(status).startswith("2"):
+        sys.exit("This page is not available!")
     else:
         soup = BeautifulSoup(data.text, 'html.parser')
         return soup
@@ -85,55 +89,45 @@ def create_html_files(l):
                     num += 1
                     print('done')
 
-
+# stex qanim ban poxi
 def get_main_words_of_html(url):
     html_doc = get_content(url)
-
     text_data = word_tokenize(html_doc.get_text())
 
+    porter = PorterStemmer()
+    stop_words = stopwords.words('english')
+
     def delete_punctuations(text: str):
-        from unicodedata import category
+        to_delete = [""]
         incomplate = ''.join(n for n in text if not category(n).startswith('P'))
-        text_without_punct = ''.join(n for n in incomplate if not category(n).startswith('S'))
-        return text_without_punct
+        almost = ''.join(n for n in incomplate if not category(n).startswith('S'))
+        comlate = [x for x in almost if x not in to_delete]
+        return comlate
 
     for i in range(len(text_data)):
         text_data[i] = delete_punctuations(text_data[i])
 
-    to_delete = [""]
-
-    text_data_without_punct = [x for x in text_data if x not in to_delete]
-
-    porter = PorterStemmer()
-    text_data_with_stem_words = [porter.stem(i) for i in text_data_without_punct]
-
-    stop_words = stopwords.words('english')
-    text_data_without_stop_words = [x for x in text_data_with_stem_words if x not in stop_words]
-    text_data_without_short_words = [x for x in text_data_without_stop_words if len(x)>2]
-    filtered_text_data = list(dict.fromkeys(text_data_without_short_words))
+    data_with_stem_words = [porter.stem(i) for i in text_data]
+    data_without_stop_words = [x for x in data_with_stem_words if x not in stop_words]
+    data_without_short_words = [x for x in data_without_stop_words if len(x)>2]
+    filtered_text_data = list(dict.fromkeys(data_without_short_words))
     return filtered_text_data
 
 
-def get_the_word_matrix(arr):
-    matrix = []
+def get_the_word_matrix(arr, path):
+    word_list = []
     for i in arr:
-        l = [i, arr.count(i)]
-        if l not in matrix:
-            matrix.append(l)
-    return matrix
+        count = arr.count(i)
+        l = {"word": f"{i}", "count": f"{count}", "path": f"{path}"}
+        if l not in word_list:
+            word_list.append(l)
+    return word_list
 
 
-def write_csv_file(file_path):
+def write_db(file_path):
     filtered = get_main_words_of_html(file_path)
-    matrix = get_the_word_matrix(filtered)
-
-    num = 1
-
-    with open(f'{num}.csv', 'w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerows(matrix)
-        num += 1
-        print('done csv')
+    word_list = get_the_word_matrix(filtered, file_path)
+    words.insert_many(word_list)
 
 
 def main():
@@ -153,7 +147,7 @@ def main():
                      if isfile(join("/home/monika/parser/python_parser/foodtime.am", f))]
 
         for i in onlyfiles:
-            write_csv_file(i)
+            write_db(i)
 
 
 if __name__ == "__main__":
