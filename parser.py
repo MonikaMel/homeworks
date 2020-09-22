@@ -9,6 +9,9 @@ from sql import sql_create_links_table
 import os
 from os import listdir
 from os.path import isfile, join
+import os.path
+from os import path
+
 import sys
 from unicodedata import category
 
@@ -25,11 +28,12 @@ client = MongoClient('mongodb://localhost:27017/')
 db = client.hello
 words = db.words
 
+priority = {"h1": 10, "h2": 9, "h3": 8, "h4": 7, "h5": 6, "h6": 5, "p": 2}
+
 
 def get_content(url):
     data = requests.get(url)
     # Checking status code
-    # stexe qanim ban poxi
     status = data.status_code
     if not str(status).startswith("2"):
         sys.exit("This page is not available!")
@@ -74,22 +78,21 @@ def recollect_links(links):
 
 
 def create_html_files(l):
-    path = os.path.join("/home/monika/parser/python_parser", f"{SITE_NAME}")
-    try:
-        os.mkdir(path)
-    except:
-        print('directory already exists')
-    finally:
+    p = os.path.join("/home/monika/parser/python_parser", f"{SITE_NAME}")
+    if path.exists(f'{p}') == False:
+        os.mkdir(p)
         num = 1
         for i in l:
             if i.startswith(f'{SITE_PROTOCOL + SITE_NAME}'):
                 response = requests.get(i)
-                with open(os.path.join(path, f"{num}.html"), 'w') as file:
+                with open(os.path.join(p, f"{num}.html"), 'w') as file:
                     file.write(response.text)
                     num += 1
                     print('done')
+    else:
+        print('directory already exists')
 
-# stex qanim ban poxi
+
 def get_main_words_of_html(url):
     html_doc = get_content(url)
     text_data = word_tokenize(html_doc.get_text())
@@ -114,7 +117,7 @@ def get_main_words_of_html(url):
     return filtered_text_data
 
 
-def get_the_word_matrix(arr, path):
+def get_the_word_list(arr, path):
     word_list = []
     for i in arr:
         count = arr.count(i)
@@ -126,7 +129,7 @@ def get_the_word_matrix(arr, path):
 
 def write_db(file_path):
     filtered = get_main_words_of_html(file_path)
-    word_list = get_the_word_matrix(filtered, file_path)
+    word_list = get_the_word_list(filtered, file_path)
     words.insert_many(word_list)
 
 
