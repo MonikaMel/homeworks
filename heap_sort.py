@@ -1,5 +1,10 @@
-# Complexity 👇
-a = [10, 5, 3, 15, 9, 12, 7, 5, 17, 2]
+a = [10, 5, 3, 15, 41, 51, 74, 1, 55, 456, 221, 556,  9, 12, 7, 5, 17, 2]
+
+def bubbleSort(arr):
+    for i in range(len(arr)):
+        for j in range(0, len(arr) - i - 1):
+            if arr[j] > arr[j + 1]:
+                arr[j], arr[j + 1] = arr[j + 1], arr[j]
 
 
 def heap_sort(a):
@@ -27,14 +32,3 @@ def heap_sort(a):
 
 
 print(heap_sort(a))
-
-# Complexity
-
-# Since our tree height is O(lg(n)),
-# we could do up to O(lg(n)) moves.
-# Across all n nodes, that's an overall time complexity of O(nlg(n)).
-# After transforming the tree into a heap,
-# we remove all n elements from it—one item at a time.
-# Removing from a heap takes O(lg(n)) time,
-# since we have to move a new value to the root of the heap and bubble down.
-# Doing n remove operations will be O(nlg(n)) time.
